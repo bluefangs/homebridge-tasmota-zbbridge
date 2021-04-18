@@ -12,7 +12,8 @@ enum DeviceType {
   Switch,
   HSBLight,
   TemperatureSensor,
-  HumiditySensor
+  HumiditySensor,
+  ContactSensor // add ContactSensor as a new DeviceType
 }
 
 export type TasmotaDevice = {
@@ -53,6 +54,11 @@ export class TasmotaAccessory {
     } else if (type.includes('HSBColor')) {
       service = this.platform.Service.Lightbulb;
       this.type = DeviceType.HSBLight;
+    } 
+    // Add support for ContactSensor
+    else if (type.toLowerCase().includes('contact')) {
+      service = this.platform.Service.ContactSensor;
+      this.type = DeviceType.ContactSensor;
     } else {
       service = this.platform.Service.Switch;
       this.type = DeviceType.Switch;
@@ -82,6 +88,11 @@ export class TasmotaAccessory {
         this.service.getCharacteristic(this.platform.Characteristic.Brightness)
           .on('set', this.setBrightness.bind(this))
           .on('get', this.getBrightness.bind(this));
+        break;
+      // Add support for ContactSensor
+      case DeviceType.ContactSensor:
+        this.service.getCharacteristic(this.platform.Characteristic.ContactSensorState)
+          .on('get', this.getSensor.bind(this));
         break;
       default:
         this.service.getCharacteristic(this.platform.Characteristic.On)
@@ -155,6 +166,11 @@ export class TasmotaAccessory {
         case DeviceType.HumiditySensor:
           this.value = sensorValue as number;
           this.service.updateCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity, this.value);
+          break;
+        // Add support for ContactSensor
+        case DeviceType.ContactSensor:
+          this.value = sensorValue as number;
+          this.service.updateCharacteristic(this.platform.Characteristic.ContactSensorState, this.value);
           break;
         default:
           this.value = (sensorValue === 'ON');
